@@ -17,6 +17,7 @@
     "skipLibCheck": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node"],
+    "typeRoots": ["./node_modules/@types", "./node_modules"]
   }
 }

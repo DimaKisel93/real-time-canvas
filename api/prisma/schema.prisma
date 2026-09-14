@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum BoardRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum ElementType {
+  STICKER
+  ARROW
+  COMMENT
+}
+
+enum CanvasEventType {
+  ELEMENT_CREATED
+  ELEMENT_MOVED
+  ELEMENT_UPDATED
+  ELEMENT_DELETED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdBoards   Board[]         @relation("BoardCreator")
+  memberships     BoardMember[]
+  createdElements CanvasElement[]
+  canvasEvents    CanvasEvent[]
+
+  @@map("users")
+}
+
+model Board {
+  id          String   @id @default(uuid())
+  title       String
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User             @relation("BoardCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  members   BoardMember[]
+  elements  CanvasElement[]
+  events    CanvasEvent[]
+  snapshots CanvasSnapshot[]
+
+  @@index([createdById])
+  @@map("boards")
+}
+
+model BoardMember {
+  id        String    @id @default(uuid())
+  boardId   String
+  userId    String
+  role      BoardRole @default(EDITOR)
+  createdAt DateTime  @default(now())
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, userId])
+  @@index([userId])
+  @@map("board_members")
+}
+
+/// Current state of a canvas object. `version` is the optimistic-lock clock.
+model CanvasElement {
+  id          String      @id @default(uuid())
+  boardId     String
+  type        ElementType
+  x           Float
+  y           Float
+  width       Float       @default(200)
+  height      Float       @default(120)
+  rotation    Float       @default(0)
+  color       String      @default("#FFE566")
+  text        String?
+  /// Type-specific payload (arrow endpoints, comment parent, etc.)
+  data        Json?
+  createdById String
+  version     Int         @default(1)
+  deletedAt   DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  board     Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  createdBy User  @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([boardId, deletedAt])
+  @@map("canvas_elements")
+}
+
+/// Append-only history of mutations (git-like event log).
+model CanvasEvent {
+  id        String          @id @default(uuid())
+  boardId   String
+  elementId String?
+  userId    String
+  type      CanvasEventType
+  payload   Json
+  /// Element version after this event was applied.
+  version   Int?
+  createdAt DateTime        @default(now())
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([boardId, createdAt])
+  @@index([elementId])
+  @@map("canvas_events")
+}
+
+/// Periodic full-board checkpoint so history can be compacted.
+model CanvasSnapshot {
+  id        String   @id @default(uuid())
+  boardId   String
+  sequence  Int
+  /// Full board state at this point in time.
+  /// Shape: { elements: CanvasElement[], members: {userId, role}[] }
+  state     Json
+  createdAt DateTime @default(now())
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, sequence])
+  @@index([boardId, createdAt])
+  @@map("canvas_snapshots")
+}

@@ -9,3 +9,7 @@ coverage/
 .DS_Store
 Thumbs.db
 data/
+
+# Prisma Client (generated via `pnpm prisma:generate`)
+api/src/generated/
+

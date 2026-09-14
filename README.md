@@ -4,18 +4,35 @@ FigJam-подобная доска: стикеры, стрелки и комме
 
 Стек: **NestJS (TypeScript)** · **PostgreSQL** · **Redis** · **Socket.io** · **Prisma** · **BullMQ**.
 
-## Запуск инфраструктуры
+## Быстрый старт
 
-```bash
-docker compose up -d
-```
+1. Скопируйте env и поднимите инфраструктуру:
 
-## API (этап 1)
+   ```bash
+   cp .env.example .env
+   docker compose up -d
+   ```
 
-```bash
-cd api
-pnpm install
-pnpm start:dev
-```
+2. Установите зависимости API и сгенерируйте Prisma Client:
+
+   ```bash
+   cd api
+   pnpm install
+   pnpm prisma:generate
+   ```
+
+3. Примените миграции:
+
+   ```bash
+   pnpm prisma:migrate
+   ```
+
+4. Запустите API:
+
+   ```bash
+   pnpm start:dev
+   ```
 
 Проверка: `GET http://localhost:3000/health`
+
+Миграции: `api/prisma/migrations`. Схема: `api/prisma/schema.prisma`.
