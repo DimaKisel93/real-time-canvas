@@ -6,15 +6,12 @@ import {
 import type { Request } from 'express';
 import type { AuthUser } from '../../auth/auth.types.js';
 
-export const CurrentUserId = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): string => {
+export const CurrentUser = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): AuthUser => {
     const request = ctx.switchToHttp().getRequest<Request & { user?: AuthUser }>();
-    const userId = request.user?.id;
-
-    if (!userId) {
+    if (!request.user?.id) {
       throw new UnauthorizedException();
     }
-
-    return userId;
+    return request.user;
   },
 );

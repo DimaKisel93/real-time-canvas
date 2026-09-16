@@ -35,4 +35,16 @@ FigJam-подобная доска: стикеры, стрелки и комме
 
 Проверка: `GET http://localhost:3000/health`
 
+Защищённые маршруты ждут `Authorization: Bearer <token>`.
+
+### Auth
+
+| Метод | Путь             | Auth | Описание                                               |
+| ----- | ---------------- | ---- | ------------------------------------------------------ |
+| POST  | `/auth/register` | нет  | Регистрация, ответ: `{ accessToken, tokenType, user }` |
+| POST  | `/auth/login`    | нет  | Логин по email/password                                |
+| GET   | `/auth/me`       | JWT  | Текущий пользователь                                   |
+| POST  | `/users`         | нет  | Регистрация без токена (как раньше)                    |
+| GET   | `/users/:id`     | JWT  | Публичный профиль                                      |
+
 Миграции: `api/prisma/migrations`. Схема: `api/prisma/schema.prisma`.

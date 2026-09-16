@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Prisma } from '../generated/prisma/client.js';
@@ -44,16 +45,34 @@ export class UsersService {
   }
 
   async findById(id: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
-      select: userPublicSelect,
-    });
+    const user = await this.findPublicById(id);
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     return user;
+  }
+
+  async findPublicById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: userPublicSelect,
+    });
+  }
+
+  async requireById(id: string) {
+    const user = await this.findPublicById(id);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    return user;
+  }
+
+  async findAuthByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
   }
 
   async assertExists(id: string) {
