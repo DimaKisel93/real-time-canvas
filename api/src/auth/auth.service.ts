@@ -38,6 +38,15 @@ export class AuthService {
     return this.jwtService.sign(payload);
   }
 
+  async authenticateToken(token: string): Promise<AuthUser> {
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+      return this.usersService.requireById(payload.sub);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
   private issueAuthResponse(user: AuthUser) {
     return {
       accessToken: this.signAccessToken(user),

@@ -7,5 +7,6 @@ import { ElementsService } from './elements.service.js';
   imports: [BoardsModule],
   controllers: [ElementsController],
   providers: [ElementsService],
+  exports: [ElementsService],
 })
 export class ElementsModule {}
